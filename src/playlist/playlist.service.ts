@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Playlist } from './playlist.entity/playlist.entity';
 import { Movie } from 'src/movie/movie.entity/movie.entity';
 
@@ -12,18 +12,21 @@ export class PlaylistService {
     @InjectRepository(Movie)
     private movieRepository: Repository<Movie>,
   ) {}
-  async addMovieToPlaylist(playlistId: number, movieId: number): Promise<void> {
+  async addMovieToPlaylist(playlistId: number, body): Promise<void> {
     const playlist = await this.playlistRepository.findOne({
       where: {
         id: playlistId,
       },
+      relations: {
+        movies: true,
+      },
     });
     const movie = await this.movieRepository.findOne({
       where: {
-        id: movieId,
+        id: body.movieId,
       },
     });
-
+    console.log(playlist);
     if (playlist && movie) {
       playlist.movies.push(movie);
       console.log(playlist);
@@ -35,15 +38,28 @@ export class PlaylistService {
     playlist.name = name;
     return this.playlistRepository.save(playlist);
   }
-  async editPlaylist(id: number, name: string): Promise<Playlist> {
+  async editPlaylist(id: number, body: any) {
     const playlist = await this.playlistRepository.findOne({
       where: {
         id: id,
       },
+      relations: {
+        movies: true,
+      },
     });
     if (!playlist) throw new NotFoundException();
-    playlist.name = name;
-    return this.playlistRepository.save(playlist);
+    playlist.name = body.name;
+    playlist.movies = [];
+    console.log(playlist);
+    const movies = await this.movieRepository.find({
+      where: {
+        id: In(body.movies),
+      },
+    });
+    console.log(body);
+    playlist.movies = movies;
+    console.log(playlist);
+    return await this.playlistRepository.save(playlist);
   }
 
   async deletePlaylist(id: number): Promise<void> {
@@ -59,9 +75,18 @@ export class PlaylistService {
   async getAllPlaylists(): Promise<Playlist[]> {
     return this.playlistRepository.find({
       relations: {
-        movies: {
-          actors: true,
-        },
+        movies: true,
+      },
+    });
+  }
+
+  async getPlaylist(id: number): Promise<Playlist> {
+    return await this.playlistRepository.findOne({
+      where: {
+        id: id,
+      },
+      relations: {
+        movies: true,
       },
     });
   }

@@ -19,12 +19,12 @@ export class PlaylistController {
     return this.playlistService.createPlaylist(name);
   }
   @Post(':id/movies')
-  async addMovie(@Param('id') id: number, @Body('movieId') movieId: number) {
-    return this.playlistService.addMovieToPlaylist(id, movieId);
+  async addMovie(@Param('id') id: number, @Body() body: any) {
+    return this.playlistService.addMovieToPlaylist(id, body);
   }
   @Put(':id')
-  async edit(@Param('id') id: number, @Body('name') name: string) {
-    return this.playlistService.editPlaylist(id, name);
+  async edit(@Param('id') id: number, @Body() movies: any) {
+    return this.playlistService.editPlaylist(id, movies);
   }
   @Delete(':id')
   async delete(@Param('id') id: number) {
@@ -32,7 +32,10 @@ export class PlaylistController {
   }
   @Get('playlists')
   async getAllPlaylists(): Promise<Playlist[]> {
-    console.log('aquiqqq');
     return this.playlistService.getAllPlaylists();
+  }
+  @Get(':id')
+  async getPlaylist(@Param('id') id: number) {
+    return this.playlistService.getPlaylist(id);
   }
 }
